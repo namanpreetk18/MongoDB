@@ -1,0 +1,130 @@
+### MongoDB Collection: `products`
+
+Each document includes `name`, `price`, `category`, and an array of `variants`.
+
+---
+
+### Insert Sample Products (Mongo Shell)
+
+```js
+db.products.insertMany([
+  {
+    name: "T-Shirt",
+    price: 499,
+    category: "Clothing",
+    variants: [
+      { color: "Red", size: "M", stock: 50 },
+      { color: "Blue", size: "L", stock: 30 }
+    ]
+  },
+  {
+    name: "Smartphone",
+    price: 15000,
+    category: "Electronics",
+    variants: [
+      { color: "Black", size: "128GB", stock: 20 },
+      { color: "White", size: "64GB", stock: 10 }
+    ]
+  },
+  {
+    name: "Book - Node.js Basics",
+    price: 299,
+    category: "Books",
+    variants: [
+      { color: "N/A", size: "Paperback", stock: 100 },
+      { color: "N/A", size: "Ebook", stock: 200 }
+    ]
+  }
+]);
+```
+
+---
+
+### Queries
+
+1. **Retrieve All Products**
+
+```js
+db.products.find({});
+```
+
+2. **Filter by Category (e.g., Electronics)**
+
+```js
+db.products.find({ category: "Electronics" });
+```
+
+3. **Project Specific Variant Details (only name and variants)**
+
+```js
+db.products.find({}, { name: 1, variants: 1, _id: 0 });
+```
+
+4. **Find Products Where a Variant Has a Specific Color (e.g., Red)**
+
+```js
+db.products.find({ "variants.color": "Red" });
+```
+
+5. **Update Stock of a Specific Variant**
+
+```js
+db.products.updateOne(
+  { name: "T-Shirt", "variants.color": "Red" },
+  { $set: { "variants.$.stock": 45 } }
+);
+```
+
+---
+
+### Mongoose Schema (Node.js)
+
+```js
+const mongoose = require("mongoose");
+
+const variantSchema = new mongoose.Schema({
+  color: String,
+  size: String,
+  stock: Number,
+});
+
+const productSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  price: { type: Number, required: true, min: 0 },
+  category: { type: String, enum: ["Clothing", "Electronics", "Books", "Other"] },
+  variants: [variantSchema]
+});
+
+module.exports = mongoose.model("Product", productSchema);
+```
+
+---
+
+### Example Mongoose Queries
+
+```js
+const Product = require("./models/Product");
+
+// 1. Create a product
+await Product.create({
+  name: "Shoes",
+  price: 1200,
+  category: "Clothing",
+  variants: [{ color: "Black", size: "42", stock: 15 }]
+});
+
+// 2. Get all products
+const products = await Product.find();
+
+// 3. Filter by category
+const electronics = await Product.find({ category: "Electronics" });
+
+// 4. Project only name and variants
+const projected = await Product.find({}, "name variants");
+
+// 5. Update a variant’s stock
+await Product.updateOne(
+  { name: "Shoes", "variants.color": "Black" },
+  { $set: { "variants.$.stock": 12 } }
+);
+```
